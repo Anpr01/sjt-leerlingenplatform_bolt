@@ -3,7 +3,7 @@ import {
   User, Upload, MessageCircle, Calendar, Search,
   LogOut, FileText, Image, Video, Download, Trash2,
   Send, Bot, Users, Home, Bell, BookOpen,
-  Eye, EyeOff, CheckCircle, Clock
+
 } from 'lucide-react';
 
 // Types
