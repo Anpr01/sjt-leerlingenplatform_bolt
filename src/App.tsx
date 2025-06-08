@@ -3,8 +3,7 @@ import {
   User, Upload, MessageCircle, Calendar, Search,
   LogOut, FileText, Image, Video, Download, Trash2,
   Send, Bot, Users, Home, Bell, BookOpen,
-  Eye, EyeOff, CheckCircle, Clock,
-  Menu, X
+
 } from 'lucide-react';
 
 // Types
@@ -12,6 +11,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  password: string;
   year: string;
   stream: string;
   subjects: string[];
@@ -94,6 +94,8 @@ const App: React.FC = () => {
   const [aiChatMessages, setAiChatMessages] = useState<ChatMessage[]>([]);
   const [homework, setHomework] = useState<HomeworkItem[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [passwordResets, setPasswordResets] = useState<{ id: string; email: string }[]>([]);
+  const [visiblePasswords, setVisiblePasswords] = useState<{ [key: string]: boolean }>({});
   
   // UI states
   const [searchTerm, setSearchTerm] = useState('');
@@ -158,6 +160,7 @@ const App: React.FC = () => {
     localStorage.setItem('sjt_ai_chat', JSON.stringify(aiChatMessages));
     localStorage.setItem('sjt_homework', JSON.stringify(homework));
     localStorage.setItem('sjt_notifications', JSON.stringify(notifications));
+    localStorage.setItem('sjt_password_resets', JSON.stringify(passwordResets));
   };
 
   const loadData = () => {
@@ -167,6 +170,7 @@ const App: React.FC = () => {
     const savedAiChat = localStorage.getItem('sjt_ai_chat');
     const savedHomework = localStorage.getItem('sjt_homework');
     const savedNotifications = localStorage.getItem('sjt_notifications');
+    const savedResets = localStorage.getItem('sjt_password_resets');
     
     if (savedUsers) setUsers(JSON.parse(savedUsers));
     if (savedFiles) setFiles(JSON.parse(savedFiles));
@@ -174,6 +178,7 @@ const App: React.FC = () => {
     if (savedAiChat) setAiChatMessages(JSON.parse(savedAiChat));
     if (savedHomework) setHomework(JSON.parse(savedHomework));
     if (savedNotifications) setNotifications(JSON.parse(savedNotifications));
+    if (savedResets) setPasswordResets(JSON.parse(savedResets));
   };
 
   // Authentication
@@ -186,13 +191,15 @@ const App: React.FC = () => {
       return;
     }
     
-    const user = users.find(u => u.email === loginForm.email);
+    const user = users.find(u => u.email === loginForm.email && u.password === loginForm.password);
     if (user) {
       const updatedUser = { ...user, lastLogin: new Date().toISOString(), isOnline: true };
       setCurrentUser(updatedUser);
       setUsers(prev => prev.map(u => u.id === user.id ? updatedUser : u));
       setCurrentView('dashboard');
       addNotification('system', 'Welkom terug!', `Hallo ${user.name}, leuk je weer te zien! 🎉`);
+    } else {
+      alert('Ongeldig email of wachtwoord');
     }
   };
 
@@ -218,6 +225,7 @@ const App: React.FC = () => {
       id: Date.now().toString(),
       name: signupForm.name,
       email: signupForm.email,
+      password: signupForm.password,
       year: signupForm.year,
       stream: signupForm.stream,
       subjects: signupForm.subjects,
@@ -254,6 +262,16 @@ const App: React.FC = () => {
       read: false
     };
     setNotifications(prev => [notification, ...prev]);
+  };
+
+  const requestPasswordReset = () => {
+    if (!loginForm.email) {
+      alert('Vul je email adres in');
+      return;
+    }
+    setPasswordResets(prev => [...prev, { id: Date.now().toString(), email: loginForm.email }]);
+    addNotification('system', 'Reset aangevraagd', `${loginForm.email} heeft om een nieuw wachtwoord gevraagd.`);
+    alert('Je verzoek is verstuurd naar de admin.');
   };
 
   // File management
@@ -500,7 +518,8 @@ const App: React.FC = () => {
   // Save data when state changes
   useEffect(() => {
     saveData();
-  }, [users, files, chatMessages, aiChatMessages, homework, notifications]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [users, files, chatMessages, aiChatMessages, homework, notifications, passwordResets]);
 
   // Login Page
   if (currentView === 'login') {
@@ -557,6 +576,15 @@ const App: React.FC = () => {
             >
               Inloggen 🚀
             </button>
+            <div className="mt-2 text-center">
+              <button
+                type="button"
+                onClick={requestPasswordReset}
+                className="text-sm text-green-600 hover:text-green-700"
+              >
+                Wachtwoord vergeten?
+              </button>
+            </div>
           </form>
           
           <div className="mt-6 text-center">
@@ -843,6 +871,9 @@ const App: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Wachtwoord
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -867,25 +898,54 @@ const App: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(user.lastLogin)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          user.isOnline 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {user.isOnline ? 'Online' : 'Offline'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        user.isOnline
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {user.isOnline ? 'Online' : 'Offline'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {visiblePasswords[user.id] ? (
+                        user.password
+                      ) : (
+                        <button onClick={() => setVisiblePasswords(prev => ({ ...prev, [user.id]: true }))} className="text-green-600 hover:text-green-700">
+                          Toon
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
+        {passwordResets.length > 0 && (
+          <div className="bg-white rounded-lg shadow mt-8">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-medium text-gray-900">Wachtwoord Reset Verzoeken</h2>
+            </div>
+            <div className="p-6 space-y-2">
+              {passwordResets.map((req) => (
+                <div key={req.id} className="flex justify-between items-center">
+                  <span className="text-sm text-gray-700">{req.email}</span>
+                  <button
+                    onClick={() => setPasswordResets(prev => prev.filter(r => r.id !== req.id))}
+                    className="text-sm text-green-600 hover:text-green-700"
+                  >
+                    Gemarkeerd
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   // Main Dashboard
   return (
