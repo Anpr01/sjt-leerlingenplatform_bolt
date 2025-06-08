@@ -1527,7 +1527,11 @@ const App: React.FC = () => {
                   
                   <select
                     value={newHomework.priority}
-                    onChange={(e) => setNewHomework(prev => ({ ...prev, priority: e.target.value as 'low' | 'medium' | 'high' }))}
+                    onChange={(e) =>
+                      setNewHomework(prev => ({
+                        ...prev,
+                        priority: e.target.value as 'low' | 'medium' | 'high'
+                      }))}
                     className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   >
                     <option value="low">Lage prioriteit</option>
