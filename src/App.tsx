@@ -109,6 +109,8 @@ const App: React.FC = () => {
   const [uploadForm, setUploadForm] = useState({
     year: '', stream: '', subject: '', exercise: '', file: null as File | null
   });
+  const [aiChatTyping, setAiChatTyping] = useState(false);
+  const [classAiTyping, setClassAiTyping] = useState(false);
   
   // Refs
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -123,12 +125,15 @@ const App: React.FC = () => {
   ];
   
   const subjects = [
-    'Nederlands', 'Frans', 'Engels', 'Duits', 'Wiskunde', 'Geschiedenis', 
-    'Aardrijkskunde', 'Chemie', 'Fysica', 'Biologie', 'Economie', 
-    'Informatica', 'Lichamelijke Opvoeding', 'Plastische Opvoeding', 
-    'Muzikale Opvoeding', 'Grieks', 'Latijn', 'Sociale Wetenschappen', 
+    'Nederlands', 'Frans', 'Engels', 'Duits', 'Wiskunde', 'Geschiedenis',
+    'Aardrijkskunde', 'Chemie', 'Fysica', 'Biologie', 'Economie',
+    'Informatica', 'Lichamelijke Opvoeding', 'Plastische Opvoeding',
+    'Muzikale Opvoeding', 'Grieks', 'Latijn', 'Sociale Wetenschappen',
     'Techniek', 'Godsdienst', 'Artistieke Vorming'
   ];
+
+  // Endpoint for the local AI assistant (no API key required)
+  const AI_ENDPOINT = '/api/assistant';
 
   // Load data on mount
   useEffect(() => {
@@ -357,10 +362,10 @@ const App: React.FC = () => {
     addNotification('chat', 'Nieuw bericht', `Je hebt een bericht gestuurd in de klaschat`);
   };
 
-  const sendAiMessage = (e: React.FormEvent) => {
+  const sendAiMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAiMessage.trim() || !currentUser) return;
-    
+
     const message: ChatMessage = {
       id: Date.now().toString(),
       user: currentUser.name,
@@ -368,83 +373,71 @@ const App: React.FC = () => {
       timestamp: new Date().toISOString(),
       type: 'ai'
     };
-    
+
     setAiChatMessages(prev => [...prev, message]);
     setNewAiMessage('');
-    
-    // AI Response
-    setTimeout(() => {
-      const aiResponse: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        user: 'SJT AI Assistent',
-        text: generateAIResponse(newAiMessage),
-        timestamp: new Date().toISOString(),
-        isAI: true,
-        type: 'ai'
-      };
-      setAiChatMessages(prev => [...prev, aiResponse]);
-    }, 1500);
+
+    const recent = [...aiChatMessages, message].slice(-5);
+    const msgs = recent.map(m => ({
+      role: m.isAI ? 'assistant' : 'user',
+      content: m.text
+    })) as { role: 'user' | 'assistant'; content: string }[];
+
+    setAiChatTyping(true);
+    const reply = await callAssistant(msgs);
+    setAiChatTyping(false);
+
+    const aiResponse: ChatMessage = {
+      id: (Date.now() + 1).toString(),
+      user: 'SJT AI Assistent',
+      text: reply,
+      timestamp: new Date().toISOString(),
+      isAI: true,
+      type: 'ai'
+    };
+    setAiChatMessages(prev => [...prev, aiResponse]);
   };
 
-  const handleAIResponse = () => {
+  const handleAIResponse = async () => {
     if (!currentUser) return;
-    
-    // Get last 5 messages for context
+
     const recentMessages = chatMessages.slice(-5);
-    const relevantFiles = files.filter(f => 
-      f.year === currentUser.year && f.stream === currentUser.stream
-    );
-    
-    const contextualResponse = generateContextualAIResponse(recentMessages, relevantFiles);
-    
+    const msgs = recentMessages.map(m => ({
+      role: m.isAI ? 'assistant' : 'user',
+      content: m.text
+    })) as { role: 'user' | 'assistant'; content: string }[];
+
+    setClassAiTyping(true);
+    const reply = await callAssistant(msgs);
+    setClassAiTyping(false);
+
     const aiMessage: ChatMessage = {
       id: Date.now().toString(),
       user: 'SJT AI Assistent',
-      text: contextualResponse,
+      text: reply,
       timestamp: new Date().toISOString(),
       isAI: true,
       type: 'class'
     };
-    
+
     setChatMessages(prev => [...prev, aiMessage]);
   };
 
-  const generateAIResponse = (message: string): string => {
-    const responses = [
-      "Dat is een interessante vraag! Laat me je helpen. 🤖",
-      "Ik begrijp je vraag. Hier is wat ik kan vertellen... 📚",
-      "Goede vraag! Op basis van de lesmateriaal kan ik zeggen... 🎓",
-      "Laat me je daarbij helpen! Hier is mijn advies... ✨",
-      "Dat is precies het soort vraag waar ik voor gemaakt ben! 🦉"
-    ];
-    
-    if (message.toLowerCase().includes('wiskunde')) {
-      return "Voor wiskunde raad ik aan om stap voor stap te werken. Bekijk de geüploade oefeningen en probeer eerst de voorbeelden! 📐";
+  const callAssistant = async (msgs: { role: 'user' | 'assistant'; content: string }[]) => {
+    try {
+      const response = await fetch(AI_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ messages: msgs })
+      });
+      const data = await response.json();
+      return data.reply || '';
+    } catch (err) {
+      console.error(err);
+      return 'Er is een fout opgetreden bij het ophalen van het AI antwoord.';
     }
-    
-    if (message.toLowerCase().includes('nederlands')) {
-      return "Voor Nederlands is veel lezen belangrijk. Kijk naar de literatuurlijst en maak samenvattingen! 📖";
-    }
-    
-    return responses[Math.floor(Math.random() * responses.length)];
-  };
-
-  const generateContextualAIResponse = (recentMessages: ChatMessage[], relevantFiles: FileItem[]): string => {
-    const lastMessage = recentMessages[recentMessages.length - 1];
-    
-    if (lastMessage?.text.toLowerCase().includes('huiswerk')) {
-      return `Ik zie dat jullie het over huiswerk hebben! Er zijn ${relevantFiles.length} bestanden beschikbaar voor jullie klas. Kijk vooral naar de recente uploads! 📚`;
-    }
-    
-    if (lastMessage?.text.toLowerCase().includes('toets') || lastMessage?.text.toLowerCase().includes('examen')) {
-      return `Voor de toets raad ik aan om de geüploade samenvatting te bekijken. Succes allemaal! 🍀`;
-    }
-    
-    if (lastMessage?.text.toLowerCase().includes('help')) {
-      return `Ik help graag! Bekijk de bestanden die jullie klasgenoten hebben geüpload, daar staan vaak goede uitleg bij. 🤝`;
-    }
-    
-    return `Ik volg jullie gesprek mee! Als jullie vragen hebben over de ${relevantFiles.length} beschikbare bestanden, laat het me weten! 🦉`;
   };
 
   // Homework management
@@ -1436,6 +1429,9 @@ const App: React.FC = () => {
                     </div>
                   </div>
                 ))}
+                {classAiTyping && (
+                  <div className="text-center text-sm text-gray-500">AI is aan het denken...</div>
+                )}
                 <div ref={chatEndRef} />
               </div>
               
@@ -1497,6 +1493,9 @@ const App: React.FC = () => {
                     </div>
                   </div>
                 ))}
+                {aiChatTyping && (
+                  <div className="text-center text-sm text-gray-500">AI is aan het denken...</div>
+                )}
                 <div ref={aiChatEndRef} />
               </div>
               
