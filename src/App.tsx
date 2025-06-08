@@ -78,6 +78,7 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState<'login' | 'signup' | 'dashboard' | 'admin'>('login');
   const [activeTab, setActiveTab] = useState<'home' | 'files' | 'chat' | 'homework' | 'profile'>('home');
+  const [isAdmin, setIsAdmin] = useState(false);
   
   // Form states
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
@@ -802,7 +803,7 @@ const App: React.FC = () => {
                   <Users className="w-6 h-6 text-blue-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Totaal Gebruikers</p>
+                  <p className="text-sm font-medium text-gray-600">Aantal gebruikers</p>
                   <p className="text-2xl font-bold text-gray-900">{users.length}</p>
                 </div>
               </div>
@@ -814,7 +815,7 @@ const App: React.FC = () => {
                   <FileText className="w-6 h-6 text-green-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Geüploade Bestanden</p>
+                  <p className="text-sm font-medium text-gray-600">Geüploade bestanden</p>
                   <p className="text-2xl font-bold text-gray-900">{files.length}</p>
                 </div>
               </div>
@@ -826,7 +827,7 @@ const App: React.FC = () => {
                   <MessageCircle className="w-6 h-6 text-purple-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Chat Berichten</p>
+                  <p className="text-sm font-medium text-gray-600">Chatberichten</p>
                   <p className="text-2xl font-bold text-gray-900">{chatMessages.length}</p>
                 </div>
               </div>
@@ -920,7 +921,7 @@ const App: React.FC = () => {
                     onClick={() => setPasswordResets(prev => prev.filter(r => r.id !== req.id))}
                     className="text-sm text-green-600 hover:text-green-700"
                   >
-                    Gemarkeerd
+                    Afgehandeld
                   </button>
                 </div>
               ))}
