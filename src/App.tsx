@@ -3,7 +3,7 @@ import {
   User, Upload, MessageCircle, Calendar, Search,
   LogOut, FileText, Image, Video, Download, Trash2,
   Send, Bot, Users, Home, Bell, BookOpen,
-  Eye, EyeOff, CheckCircle, Clock,
+  EyeOff, CheckCircle, Clock,
 
 } from 'lucide-react';
 
@@ -550,7 +550,7 @@ const App: React.FC = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                 </button>
               </div>
             </div>
@@ -719,7 +719,7 @@ const App: React.FC = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -742,7 +742,7 @@ const App: React.FC = () => {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
-                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -1314,7 +1314,7 @@ const App: React.FC = () => {
                           onClick={() => setSelectedFile(file)}
                           className="text-gray-400 hover:text-gray-600"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Search className="w-4 h-4" />
                         </button>
                       </div>
                       
