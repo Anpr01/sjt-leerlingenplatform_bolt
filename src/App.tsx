@@ -3,7 +3,7 @@ import {
   User, Upload, MessageCircle, Calendar, Search,
   LogOut, FileText, Image, Video, Download, Trash2,
   Send, Bot, Users, Home, Bell, BookOpen,
-  Eye, EyeOff, CheckCircle, Clock,
+  EyeOff, CheckCircle, Clock,
 
 } from 'lucide-react';
 
@@ -78,6 +78,7 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState<'login' | 'signup' | 'dashboard' | 'admin'>('login');
   const [activeTab, setActiveTab] = useState<'home' | 'files' | 'chat' | 'homework' | 'profile'>('home');
+  const [isAdmin, setIsAdmin] = useState(false);
   
   // Form states
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
@@ -550,7 +551,7 @@ const App: React.FC = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                 </button>
               </div>
             </div>
@@ -719,7 +720,7 @@ const App: React.FC = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -742,7 +743,7 @@ const App: React.FC = () => {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
-                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -802,7 +803,7 @@ const App: React.FC = () => {
                   <Users className="w-6 h-6 text-blue-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Totaal Gebruikers</p>
+                  <p className="text-sm font-medium text-gray-600">Aantal gebruikers</p>
                   <p className="text-2xl font-bold text-gray-900">{users.length}</p>
                 </div>
               </div>
@@ -814,7 +815,7 @@ const App: React.FC = () => {
                   <FileText className="w-6 h-6 text-green-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Geüploade Bestanden</p>
+                  <p className="text-sm font-medium text-gray-600">Geüploade bestanden</p>
                   <p className="text-2xl font-bold text-gray-900">{files.length}</p>
                 </div>
               </div>
@@ -826,7 +827,7 @@ const App: React.FC = () => {
                   <MessageCircle className="w-6 h-6 text-purple-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Chat Berichten</p>
+                  <p className="text-sm font-medium text-gray-600">Chatberichten</p>
                   <p className="text-2xl font-bold text-gray-900">{chatMessages.length}</p>
                 </div>
               </div>
@@ -920,7 +921,7 @@ const App: React.FC = () => {
                     onClick={() => setPasswordResets(prev => prev.filter(r => r.id !== req.id))}
                     className="text-sm text-green-600 hover:text-green-700"
                   >
-                    Gemarkeerd
+                    Afgehandeld
                   </button>
                 </div>
               ))}
@@ -1314,7 +1315,7 @@ const App: React.FC = () => {
                           onClick={() => setSelectedFile(file)}
                           className="text-gray-400 hover:text-gray-600"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Search className="w-4 h-4" />
                         </button>
                       </div>
                       
