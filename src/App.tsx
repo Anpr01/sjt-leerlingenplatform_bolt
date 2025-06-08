@@ -3,7 +3,7 @@ import {
   User, Upload, MessageCircle, Calendar, Search,
   LogOut, FileText, Image, Video, Download, Trash2,
   Send, Bot, Users, Home, Bell, BookOpen,
-  Eye, EyeOff, CheckCircle, Clock, Menu, X,
+
 } from 'lucide-react';
 
 // Types
@@ -108,7 +108,6 @@ const App: React.FC = () => {
   const [uploadForm, setUploadForm] = useState({
     year: '', stream: '', subject: '', exercise: '', file: null as File | null
   });
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Refs
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -123,19 +122,11 @@ const App: React.FC = () => {
   ];
   
   const subjects = [
-    'Nederlands', 'Frans', 'Engels', 'Duits', 'Wiskunde', 'Geschiedenis',
-    'Aardrijkskunde', 'Chemie', 'Fysica', 'Biologie', 'Economie',
-    'Informatica', 'Lichamelijke Opvoeding', 'Plastische Opvoeding',
-    'Muzikale Opvoeding', 'Grieks', 'Latijn', 'Sociale Wetenschappen',
+    'Nederlands', 'Frans', 'Engels', 'Duits', 'Wiskunde', 'Geschiedenis', 
+    'Aardrijkskunde', 'Chemie', 'Fysica', 'Biologie', 'Economie', 
+    'Informatica', 'Lichamelijke Opvoeding', 'Plastische Opvoeding', 
+    'Muzikale Opvoeding', 'Grieks', 'Latijn', 'Sociale Wetenschappen', 
     'Techniek', 'Godsdienst', 'Artistieke Vorming'
-  ];
-
-  const navItems = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'files', label: 'Bestanden', icon: FileText },
-    { id: 'chat', label: 'Chat', icon: MessageCircle },
-    { id: 'homework', label: 'Huiswerk', icon: Calendar },
-    { id: 'profile', label: 'Profiel', icon: User }
   ];
 
   // Load data on mount
@@ -995,15 +986,15 @@ const App: React.FC = () => {
 
       {/* Navigation */}
       <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <button
-            className="md:hidden p-2 text-gray-600"
-            onClick={() => setIsMobileMenuOpen(true)}
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-          <nav className="hidden md:flex space-x-8">
-            {navItems.map(({ id, label, icon: Icon }) => (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <nav className="flex space-x-8">
+            {[
+              { id: 'home', label: 'Home', icon: Home },
+              { id: 'files', label: 'Bestanden', icon: FileText },
+              { id: 'chat', label: 'Chat', icon: MessageCircle },
+              { id: 'homework', label: 'Huiswerk', icon: Calendar },
+              { id: 'profile', label: 'Profiel', icon: User }
+            ].map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 onClick={() => setActiveTab(id as 'home' | 'files' | 'chat' | 'homework' | 'profile')}
@@ -1019,42 +1010,6 @@ const App: React.FC = () => {
             ))}
           </nav>
         </div>
-
-        {isMobileMenuOpen && (
-          <div className="md:hidden fixed inset-0 z-40 flex">
-            <div
-              className="fixed inset-0 bg-black/50"
-              onClick={() => setIsMobileMenuOpen(false)}
-            ></div>
-            <div className="relative bg-white w-64 h-full shadow-lg p-4">
-              <button
-                className="absolute top-4 right-4 text-gray-600"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <X className="w-5 h-5" />
-              </button>
-              <nav className="mt-8 space-y-4">
-                {navItems.map(({ id, label, icon: Icon }) => (
-                  <button
-                    key={id}
-                    onClick={() => {
-                      setActiveTab(id as 'home' | 'files' | 'chat' | 'homework' | 'profile');
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center space-x-3 px-2 py-2 rounded-md text-left transition-colors ${
-                      activeTab === id
-                        ? 'text-green-600 font-semibold'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{label}</span>
-                  </button>
-                ))}
-              </nav>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Content */}
