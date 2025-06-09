@@ -115,6 +115,12 @@ const App: React.FC = () => {
   const [aiChatTyping, setAiChatTyping] = useState(false);
   const [classAiTyping, setClassAiTyping] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    stream: '',
+    avatar: ''
+  });
   
   // Refs
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -466,9 +472,35 @@ const App: React.FC = () => {
   };
 
   const toggleHomework = (id: string) => {
-    setHomework(prev => prev.map(item => 
+    setHomework(prev => prev.map(item =>
       item.id === id ? { ...item, completed: !item.completed } : item
     ));
+  };
+
+  const openProfileEditor = () => {
+    if (currentUser) {
+      setProfileForm({
+        name: currentUser.name,
+        stream: currentUser.stream,
+        avatar: currentUser.avatar,
+      });
+      setEditingProfile(true);
+    }
+  };
+
+  const saveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser) return;
+    const updated = {
+      ...currentUser,
+      name: profileForm.name,
+      stream: profileForm.stream,
+      avatar: profileForm.avatar || currentUser.avatar,
+    };
+    setCurrentUser(updated);
+    setUsers(prev => prev.map(u => (u.id === updated.id ? updated : u)));
+    setEditingProfile(false);
+    addNotification('system', 'Profiel bijgewerkt', 'Je profiel is succesvol opgeslagen.');
   };
 
   // Utility functions
@@ -1698,9 +1730,9 @@ const App: React.FC = () => {
           <div className="max-w-2xl mx-auto space-y-6">
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center space-x-6 mb-6">
-                <img 
-                  src={currentUser.avatar} 
-                  alt="Avatar" 
+                <img
+                  src={editingProfile ? profileForm.avatar || currentUser.avatar : currentUser.avatar}
+                  alt="Avatar"
                   className="w-20 h-20 rounded-full"
                 />
                 <div>
@@ -1711,6 +1743,78 @@ const App: React.FC = () => {
                   </p>
                 </div>
               </div>
+
+              {!editingProfile && (
+                <div className="text-right mb-4">
+                  <button
+                    onClick={openProfileEditor}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    Profiel bewerken
+                  </button>
+                </div>
+              )}
+
+              {editingProfile && (
+                <form onSubmit={saveProfile} className="space-y-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Naam</label>
+                    <input
+                      type="text"
+                      value={profileForm.name}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, name: e.target.value }))}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Richting</label>
+                    <select
+                      value={profileForm.stream}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, stream: e.target.value }))}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      required
+                    >
+                      <option value="">Kies richting</option>
+                      {streams.map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Profielfoto</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) setProfileForm(prev => ({ ...prev, avatar: URL.createObjectURL(file) }));
+                      }}
+                    />
+                    {profileForm.avatar && (
+                      <img src={profileForm.avatar} alt="Preview" className="mt-2 w-16 h-16 rounded-full" />
+                    )}
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    >
+                      Opslaan
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingProfile(false)}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                    >
+                      Annuleren
+                    </button>
+                  </div>
+                </form>
+              )}
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
