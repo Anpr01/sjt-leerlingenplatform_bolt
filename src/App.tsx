@@ -24,6 +24,11 @@ interface User {
   isOnline: boolean;
 }
 
+interface Folder {
+  id: string;
+  name: string;
+}
+
 interface FileItem {
   id: string;
   name: string;
@@ -35,6 +40,8 @@ interface FileItem {
   stream: string;
   subject: string;
   exercise: string;
+  folderId?: string;
+  tags: string[];
   url: string;
   comments: Comment[];
   reactions: { [key: string]: string[] };
@@ -93,6 +100,7 @@ const App: React.FC = () => {
   
   // Data states
   const [files, setFiles] = useState<FileItem[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [aiChatMessages, setAiChatMessages] = useState<ChatMessage[]>([]);
@@ -110,8 +118,17 @@ const App: React.FC = () => {
     subject: '', title: '', description: '', dueDate: '', priority: 'medium' as const
   });
   const [uploadForm, setUploadForm] = useState({
-    year: '', stream: '', subject: '', exercise: '', file: null as File | null
+    year: '',
+    stream: '',
+    subject: '',
+    exercise: '',
+    folderId: '',
+    tags: '',
+    file: null as File | null
   });
+  const [newFolderName, setNewFolderName] = useState('');
+  const [selectedFolder, setSelectedFolder] = useState('');
+  const [tagFilter, setTagFilter] = useState('');
   const [aiChatTyping, setAiChatTyping] = useState(false);
   const [classAiTyping, setClassAiTyping] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
@@ -163,6 +180,7 @@ const App: React.FC = () => {
   const saveData = () => {
     localStorage.setItem('sjt_users', JSON.stringify(users));
     localStorage.setItem('sjt_files', JSON.stringify(files));
+    localStorage.setItem('sjt_folders', JSON.stringify(folders));
     localStorage.setItem('sjt_chat', JSON.stringify(chatMessages));
     localStorage.setItem('sjt_ai_chat', JSON.stringify(aiChatMessages));
     localStorage.setItem('sjt_homework', JSON.stringify(homework));
@@ -173,6 +191,7 @@ const App: React.FC = () => {
   const loadData = () => {
     const savedUsers = localStorage.getItem('sjt_users');
     const savedFiles = localStorage.getItem('sjt_files');
+    const savedFolders = localStorage.getItem('sjt_folders');
     const savedChat = localStorage.getItem('sjt_chat');
     const savedAiChat = localStorage.getItem('sjt_ai_chat');
     const savedHomework = localStorage.getItem('sjt_homework');
@@ -180,7 +199,11 @@ const App: React.FC = () => {
     const savedResets = localStorage.getItem('sjt_password_resets');
     
     if (savedUsers) setUsers(JSON.parse(savedUsers));
-    if (savedFiles) setFiles(JSON.parse(savedFiles));
+    if (savedFiles) {
+      const parsed: FileItem[] = JSON.parse(savedFiles);
+      setFiles(parsed.map(f => ({ ...f, tags: f.tags || [], folderId: f.folderId })));
+    }
+    if (savedFolders) setFolders(JSON.parse(savedFolders));
     if (savedChat) setChatMessages(JSON.parse(savedChat));
     if (savedAiChat) setAiChatMessages(JSON.parse(savedAiChat));
     if (savedHomework) setHomework(JSON.parse(savedHomework));
@@ -285,7 +308,7 @@ const App: React.FC = () => {
   const handleFileUpload = (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadForm.file || !currentUser) return;
-    
+
     const fileItem: FileItem = {
       id: Date.now().toString(),
       name: uploadForm.file.name,
@@ -297,13 +320,26 @@ const App: React.FC = () => {
       stream: uploadForm.stream,
       subject: uploadForm.subject,
       exercise: uploadForm.exercise,
+      folderId: uploadForm.folderId || undefined,
+      tags: uploadForm.tags
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean),
       url: URL.createObjectURL(uploadForm.file),
       comments: [],
       reactions: {}
     };
-    
+
     setFiles(prev => [...prev, fileItem]);
-    setUploadForm({ year: '', stream: '', subject: '', exercise: '', file: null });
+    setUploadForm({
+      year: '',
+      stream: '',
+      subject: '',
+      exercise: '',
+      folderId: '',
+      tags: '',
+      file: null
+    });
     if (fileInputRef.current) fileInputRef.current.value = '';
     addNotification('upload', 'Bestand geüpload!', `${fileItem.name} is succesvol geüpload voor ${fileItem.subject}`);
   };
@@ -344,6 +380,14 @@ const App: React.FC = () => {
       }
       return file;
     }));
+  };
+
+  const createFolder = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFolderName.trim()) return;
+    const folder: Folder = { id: Date.now().toString(), name: newFolderName.trim() };
+    setFolders(prev => [...prev, folder]);
+    setNewFolderName('');
   };
 
   // Chat functionality
@@ -540,7 +584,20 @@ const App: React.FC = () => {
   useEffect(() => {
     saveData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [users, files, chatMessages, aiChatMessages, homework, notifications, passwordResets]);
+  }, [users, files, folders, chatMessages, aiChatMessages, homework, notifications, passwordResets]);
+
+  const filteredFiles = files
+    .filter(file => !selectedFolder || file.folderId === selectedFolder)
+    .filter(file =>
+      file.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      file.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      file.exercise.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      file.tags.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
+    .filter(file =>
+      tagFilter === '' ||
+      file.tags.some(t => t.toLowerCase().includes(tagFilter.toLowerCase()))
+    );
 
   if (!securityPassed) {
     return (
@@ -1278,6 +1335,43 @@ const App: React.FC = () => {
         {/* Files Tab */}
         {activeTab === 'files' && (
           <div className="space-y-6">
+            {/* Folder Management */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">Mappen 📂</h2>
+              <form onSubmit={createFolder} className="flex space-x-2 mb-4">
+                <input
+                  type="text"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  placeholder="Nieuwe mapnaam"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Aanmaken
+                </button>
+              </form>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setSelectedFolder('')}
+                  className={`px-3 py-1 rounded-full text-sm ${selectedFolder === '' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                >
+                  Alle bestanden
+                </button>
+                {folders.map((folder) => (
+                  <button
+                    key={folder.id}
+                    onClick={() => setSelectedFolder(folder.id)}
+                    className={`px-3 py-1 rounded-full text-sm truncate ${selectedFolder === folder.id ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  >
+                    {folder.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Upload Form */}
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-medium text-gray-900 mb-4">Nieuw Bestand Uploaden 📁</h2>
@@ -1327,6 +1421,24 @@ const App: React.FC = () => {
                     className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     required
                   />
+                  <select
+                    value={uploadForm.folderId}
+                    onChange={(e) => setUploadForm(prev => ({ ...prev, folderId: e.target.value }))}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  >
+                    <option value="">Kies map (optioneel)</option>
+                    {folders.map(folder => (
+                      <option key={folder.id} value={folder.id}>{folder.name}</option>
+                    ))}
+                  </select>
+
+                  <input
+                    type="text"
+                    value={uploadForm.tags}
+                    onChange={(e) => setUploadForm(prev => ({ ...prev, tags: e.target.value }))}
+                    placeholder="Tags (komma's)"
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
                 </div>
                 
                 <div className="flex items-center space-x-4">
@@ -1349,7 +1461,7 @@ const App: React.FC = () => {
             </div>
 
             {/* Search */}
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-6 space-y-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
@@ -1360,103 +1472,118 @@ const App: React.FC = () => {
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
               </div>
+              <input
+                type="text"
+                value={tagFilter}
+                onChange={(e) => setTagFilter(e.target.value)}
+                placeholder="Filter op tag"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
             </div>
 
-            {/* Files Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {files
-                .filter(file => 
-                  file.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  file.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  file.exercise.toLowerCase().includes(searchTerm.toLowerCase())
-                )
-                .map((file) => (
-                  <div key={file.id} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center space-x-2">
-                          {getFileIcon(file.type)}
-                          <span className="font-medium text-gray-900 truncate">{file.name}</span>
-                        </div>
-                        <button
-                          onClick={() => setSelectedFile(file)}
-                          className="text-gray-400 hover:text-gray-600"
-                        >
-                          <Search className="w-4 h-4" />
-                        </button>
-                      </div>
-                      
-                      <div className="space-y-2 text-sm text-gray-600">
-                        <p><span className="font-medium">Vak:</span> {file.subject}</p>
-                        <p><span className="font-medium">Oefening:</span> {file.exercise}</p>
-                        <p><span className="font-medium">Jaar:</span> {file.year} middelbaar</p>
-                        <p><span className="font-medium">Richting:</span> {file.stream}</p>
-                        <p><span className="font-medium">Uploader:</span> {file.uploader}</p>
-                        <p><span className="font-medium">Datum:</span> {formatDate(file.uploadDate)}</p>
-                        <p><span className="font-medium">Grootte:</span> {formatFileSize(file.size)}</p>
-                      </div>
-                      
-                      <div className="mt-4 flex items-center justify-between">
-                        <div className="flex space-x-2">
-                          {['👍', '❤️', '🎉', '🤔'].map(emoji => (
-                            <button
-                              key={emoji}
-                              onClick={() => addReaction(file.id, emoji)}
-                              className={`px-2 py-1 rounded text-sm transition-colors ${
-                                file.reactions[emoji]?.includes(currentUser?.name || '')
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                              }`}
-                            >
-                              {emoji} {file.reactions[emoji]?.length || 0}
-                            </button>
-                          ))}
-                        </div>
-                        <a
-                          href={file.url}
-                          download={file.name}
-                          className="flex items-center space-x-1 text-green-600 hover:text-green-700"
-                        >
-                          <Download className="w-4 h-4" />
-                          <span className="text-sm">Download</span>
-                        </a>
-                      </div>
-                      
-                      {/* Comments */}
-                      <div className="mt-4 border-t pt-4">
-                        <div className="space-y-2 max-h-32 overflow-y-auto">
-                          {file.comments.map((comment) => (
-                            <div key={comment.id} className="text-sm">
-                              <span className="font-medium text-gray-900">{comment.user}:</span>
-                              <span className="text-gray-600 ml-2">{comment.text}</span>
+            {/* Files per folder */}
+            {(selectedFolder ? folders.filter(f => f.id === selectedFolder) : folders.concat([{ id: 'none', name: 'Losse bestanden' } as Folder])).map(folder => (
+              <details key={folder.id} className="bg-white rounded-lg shadow" open>
+                <summary className="cursor-pointer px-6 py-3 border-b font-medium text-gray-900">{folder.name}</summary>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+                  {filteredFiles
+                    .filter(f => (folder.id === 'none' ? !f.folderId : f.folderId === folder.id))
+                    .map((file) => (
+                      <div key={file.id} className="rounded-lg border bg-white shadow-sm hover:shadow-md transition-shadow">
+                        <div className="p-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center space-x-2">
+                              {getFileIcon(file.type)}
+                              <span className="font-medium text-gray-900 truncate">{file.name}</span>
                             </div>
-                          ))}
-                        </div>
-                        <div className="mt-2 flex space-x-2">
-                          <input
-                            type="text"
-                            value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
-                            placeholder="Voeg een opmerking toe..."
-                            className="flex-1 px-3 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-green-500 focus:border-transparent"
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter') {
-                                addComment(file.id);
-                              }
-                            }}
-                          />
-                          <button
-                            onClick={() => addComment(file.id)}
-                            className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors"
-                          >
-                            Verstuur
-                          </button>
+                            <button
+                              onClick={() => setSelectedFile(file)}
+                              className="text-gray-400 hover:text-gray-600"
+                            >
+                              <Search className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          <div className="space-y-2 text-sm text-gray-600">
+                            <p><span className="font-medium">Vak:</span> {file.subject}</p>
+                            <p><span className="font-medium">Oefening:</span> {file.exercise}</p>
+                            <p><span className="font-medium">Jaar:</span> {file.year} middelbaar</p>
+                            <p><span className="font-medium">Richting:</span> {file.stream}</p>
+                            <p><span className="font-medium">Uploader:</span> {file.uploader}</p>
+                            <p><span className="font-medium">Datum:</span> {formatDate(file.uploadDate)}</p>
+                            <p><span className="font-medium">Grootte:</span> {formatFileSize(file.size)}</p>
+                            {file.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {file.tags.map(tag => (
+                                  <span key={tag} className="px-2 py-0.5 bg-gray-100 text-xs rounded-full">{tag}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="mt-4 flex items-center justify-between">
+                            <div className="flex space-x-2">
+                              {['👍', '❤️', '🎉', '🤔'].map(emoji => (
+                                <button
+                                  key={emoji}
+                                  onClick={() => addReaction(file.id, emoji)}
+                                  className={`px-2 py-1 rounded text-sm transition-colors ${
+                                    file.reactions[emoji]?.includes(currentUser?.name || '')
+                                      ? 'bg-green-100 text-green-800'
+                                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                  }`}
+                                >
+                                  {emoji} {file.reactions[emoji]?.length || 0}
+                                </button>
+                              ))}
+                            </div>
+                            <a
+                              href={file.url}
+                              download={file.name}
+                              className="flex items-center space-x-1 text-green-600 hover:text-green-700"
+                            >
+                              <Download className="w-4 h-4" />
+                              <span className="text-sm">Download</span>
+                            </a>
+                          </div>
+
+                          {/* Comments */}
+                          <div className="mt-4 border-t pt-4">
+                            <div className="space-y-2 max-h-32 overflow-y-auto">
+                              {file.comments.map((comment) => (
+                                <div key={comment.id} className="text-sm">
+                                  <span className="font-medium text-gray-900">{comment.user}:</span>
+                                  <span className="text-gray-600 ml-2">{comment.text}</span>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="mt-2 flex space-x-2">
+                              <input
+                                type="text"
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                placeholder="Voeg een opmerking toe..."
+                                className="flex-1 px-3 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-green-500 focus:border-transparent"
+                                onKeyPress={(e) => {
+                                  if (e.key === 'Enter') {
+                                    addComment(file.id);
+                                  }
+                                }}
+                              />
+                              <button
+                                onClick={() => addComment(file.id)}
+                                className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors"
+                              >
+                                Verstuur
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+              </details>
+            ))}
           </div>
         )}
 
