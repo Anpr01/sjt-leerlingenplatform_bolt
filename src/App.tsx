@@ -6,6 +6,7 @@ import {
   EyeOff, CheckCircle, Clock,
 
 } from 'lucide-react';
+import { CloudflareGate } from './components/Security/CloudflareGate';
 
 // Types
 interface User {
@@ -78,7 +79,7 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState<'login' | 'signup' | 'dashboard' | 'admin'>('login');
   const [activeTab, setActiveTab] = useState<'home' | 'files' | 'chat' | 'homework' | 'profile'>('home');
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [securityPassed, setSecurityPassed] = useState(false);
   
   // Form states
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
@@ -506,6 +507,25 @@ const App: React.FC = () => {
     saveData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [users, files, chatMessages, aiChatMessages, homework, notifications, passwordResets]);
+
+  if (!securityPassed) {
+    return (
+      <CloudflareGate
+        onSuccess={(token) => {
+          fetch('/api/verify-turnstile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+          })
+            .then(res => res.json())
+            .then(data => {
+              if (data.ok) setSecurityPassed(true);
+              else alert('Verification failed');
+            });
+        }}
+      />
+    );
+  }
 
   // Login Page
   if (currentView === 'login') {
