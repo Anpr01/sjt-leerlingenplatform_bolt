@@ -114,7 +114,6 @@ const App: React.FC = () => {
   });
   const [aiChatTyping, setAiChatTyping] = useState(false);
   const [classAiTyping, setClassAiTyping] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({
     name: '',
@@ -1729,6 +1728,7 @@ const App: React.FC = () => {
         {activeTab === 'profile' && currentUser && (
           <div className="max-w-2xl mx-auto space-y-6">
             <div className="bg-white rounded-lg shadow p-6">
+
               <div className="flex items-center space-x-6 mb-6">
                 <img
                   src={editingProfile ? profileForm.avatar || currentUser.avatar : currentUser.avatar}
