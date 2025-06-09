@@ -3,10 +3,11 @@ import {
   User, Upload, MessageCircle, Calendar, Search,
   LogOut, FileText, Image, Video, Download, Trash2,
   Send, Bot, Users, Home, Bell, BookOpen,
-  EyeOff, CheckCircle, Clock,
+  EyeOff, CheckCircle, Clock, Menu,
 
 } from 'lucide-react';
 import { CloudflareGate } from './components/Security/CloudflareGate';
+import { MobileSidebar } from './components/MobileSidebar';
 
 // Types
 interface User {
@@ -113,7 +114,6 @@ const App: React.FC = () => {
   });
   const [aiChatTyping, setAiChatTyping] = useState(false);
   const [classAiTyping, setClassAiTyping] = useState(false);
-
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({
     name: '',
@@ -127,6 +127,7 @@ const App: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Constants
+  const years = ['1e', '2e', '3e', '4e', '5e', '6e'];
   const streams = [
     'Latijn', 'Wetenschappen', 'Economie', 'Humane Wetenschappen', 
     'Moderne Talen', 'STEM', 'Grieks-Latijn', 'Sport', 
@@ -989,6 +990,12 @@ const App: React.FC = () => {
   // Main Dashboard
   return (
     <div className="min-h-screen bg-gray-50">
+      <MobileSidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        years={years}
+        streams={streams}
+      />
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1002,6 +1009,13 @@ const App: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-4">
+              <button
+                className="md:hidden"
+                onClick={() => setSidebarOpen(true)}
+                aria-label="Open menu"
+              >
+                <Menu className="w-6 h-6 text-gray-600" />
+              </button>
               <div className="relative">
                 <Bell className="w-6 h-6 text-gray-600" />
                 {notifications.filter(n => !n.read).length > 0 && (
@@ -1033,7 +1047,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Navigation */}
-      <div className="bg-white border-b">
+      <div className="bg-white border-b hidden md:block">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-8">
             {[
