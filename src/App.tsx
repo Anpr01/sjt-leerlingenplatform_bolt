@@ -6,7 +6,7 @@ import {
   EyeOff, CheckCircle, Clock, Menu,
 
 } from 'lucide-react';
-import { CloudflareGate } from './components/Security/CloudflareGate';
+import { LandingPage } from './components/Landing/LandingPage';
 import { MobileSidebar } from './components/MobileSidebar';
 
 // Types
@@ -161,6 +161,13 @@ const App: React.FC = () => {
 
   // Endpoint for the local AI assistant (no API key required)
   const AI_ENDPOINT = '/api/assistant';
+
+  useEffect(() => {
+    const stored = localStorage.getItem('sjt_bypass');
+    if (stored && stored === import.meta.env.VITE_BYPASS_CODE) {
+      setSecurityPassed(true);
+    }
+  }, []);
 
   // Load data on mount
   useEffect(() => {
@@ -601,8 +608,16 @@ const App: React.FC = () => {
 
   if (!securityPassed) {
     return (
-      <CloudflareGate
-        onSuccess={(token) => {
+      <LandingPage
+        onBypass={(code) => {
+          if (code === import.meta.env.VITE_BYPASS_CODE) {
+            localStorage.setItem('sjt_bypass', code);
+            setSecurityPassed(true);
+          } else {
+            alert('Incorrect bypass code');
+          }
+        }}
+        onVerify={(token) => {
           fetch('/api/verify-turnstile', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
