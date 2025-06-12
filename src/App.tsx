@@ -42,6 +42,28 @@ function App() {
     { id: '5', name: 'Informatica', year: '3de', stream: 'TSO', unreadCount: 0 },
   ]);
 
+  const initializeApp = () => {
+    // Set default room
+    setSelectedRoom(chatRooms[0]);
+    // Load mock messages
+    setMessages([
+      {
+        id: '1',
+        user: 'Leraar Janssen',
+        content: 'Welkom in de algemene chatroom! Hier kunnen jullie vragen stellen over de lessen.',
+        timestamp: new Date(Date.now() - 3600000),
+        avatar: '👨‍🏫'
+      },
+      {
+        id: '2',
+        user: 'Emma De Vries',
+        content: 'Hallo allemaal! Heeft iemand de huiswerkopdracht voor morgen?',
+        timestamp: new Date(Date.now() - 1800000),
+        avatar: '👩‍🎓'
+      }
+    ]);
+  };
+
   const handleTurnstileSuccess = async (token: string) => {
     setIsVerifying(true);
     try {
@@ -69,28 +91,6 @@ function App() {
   const handleBypass = () => {
     setIsVerified(true);
     initializeApp();
-  };
-
-  const initializeApp = () => {
-    // Set default room
-    setSelectedRoom(chatRooms[0]);
-    // Load mock messages
-    setMessages([
-      {
-        id: '1',
-        user: 'Leraar Janssen',
-        content: 'Welkom in de algemene chatroom! Hier kunnen jullie vragen stellen over de lessen.',
-        timestamp: new Date(Date.now() - 3600000),
-        avatar: '👨‍🏫'
-      },
-      {
-        id: '2',
-        user: 'Emma De Vries',
-        content: 'Hallo allemaal! Heeft iemand de huiswerkopdracht voor morgen?',
-        timestamp: new Date(Date.now() - 1800000),
-        avatar: '👩‍🎓'
-      }
-    ]);
   };
 
   const sendMessage = () => {
