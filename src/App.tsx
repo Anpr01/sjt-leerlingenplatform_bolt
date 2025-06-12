@@ -54,25 +54,7 @@ function App() {
       const result = await response.json();
       if (result.ok) {
         setIsVerified(true);
-        // Set default room
-        setSelectedRoom(chatRooms[0]);
-        // Load mock messages
-        setMessages([
-          {
-            id: '1',
-            user: 'Leraar Janssen',
-            content: 'Welkom in de algemene chatroom! Hier kunnen jullie vragen stellen over de lessen.',
-            timestamp: new Date(Date.now() - 3600000),
-            avatar: '👨‍🏫'
-          },
-          {
-            id: '2',
-            user: 'Emma De Vries',
-            content: 'Hallo allemaal! Heeft iemand de huiswerkopdracht voor morgen?',
-            timestamp: new Date(Date.now() - 1800000),
-            avatar: '👩‍🎓'
-          }
-        ]);
+        initializeApp();
       } else {
         alert('Verificatie mislukt. Probeer opnieuw.');
       }
@@ -82,6 +64,33 @@ function App() {
     } finally {
       setIsVerifying(false);
     }
+  };
+
+  const handleBypass = () => {
+    setIsVerified(true);
+    initializeApp();
+  };
+
+  const initializeApp = () => {
+    // Set default room
+    setSelectedRoom(chatRooms[0]);
+    // Load mock messages
+    setMessages([
+      {
+        id: '1',
+        user: 'Leraar Janssen',
+        content: 'Welkom in de algemene chatroom! Hier kunnen jullie vragen stellen over de lessen.',
+        timestamp: new Date(Date.now() - 3600000),
+        avatar: '👨‍🏫'
+      },
+      {
+        id: '2',
+        user: 'Emma De Vries',
+        content: 'Hallo allemaal! Heeft iemand de huiswerkopdracht voor morgen?',
+        timestamp: new Date(Date.now() - 1800000),
+        avatar: '👩‍🎓'
+      }
+    ]);
   };
 
   const sendMessage = () => {
@@ -143,12 +152,37 @@ function App() {
                 </h1>
                 <p className="text-gray-600">Leerlingenplatform</p>
               </div>
+              
               <div className="text-center mb-6">
                 <p className="text-sm text-gray-500 mb-4">
                   Verifieer jezelf om toegang te krijgen tot het platform
                 </p>
               </div>
-              <CloudflareGate onSuccess={handleTurnstileSuccess} />
+              
+              <div className="space-y-4">
+                <CloudflareGate onSuccess={handleTurnstileSuccess} />
+                
+                {/* Development Bypass Button */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300" />
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-gray-500">of</span>
+                  </div>
+                </div>
+                
+                <button
+                  onClick={handleBypass}
+                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors duration-200 text-sm"
+                >
+                  🚧 Ontwikkelingsmodus (Bypass Verificatie)
+                </button>
+                
+                <p className="text-xs text-gray-400 text-center">
+                  Bypass optie voor ontwikkeling - wordt verwijderd in productie
+                </p>
+              </div>
             </div>
           </div>
         )}

@@ -6,11 +6,12 @@ interface GateProps {
 }
 
 export const CloudflareGate: React.FC<GateProps> = ({ onSuccess }) => (
-  <div className="flex items-center justify-center min-h-screen bg-gray-50">
+  <div className="w-full">
     <Turnstile
       sitekey={import.meta.env.VITE_CF_TURNSTILE_SITEKEY!}
       onSuccess={onSuccess}
       onError={() => alert('Turnstile verification failed')}
+      className="mx-auto"
     />
   </div>
 );
