@@ -6,7 +6,6 @@ import {
   EyeOff, CheckCircle, Clock, Menu,
 
 } from 'lucide-react';
-import { CloudflareGate } from './components/Security/CloudflareGate';
 import { LandingPage } from './components/Landing/LandingPage';
 import { MobileSidebar } from './components/MobileSidebar';
 
@@ -89,7 +88,6 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'login' | 'signup' | 'dashboard' | 'admin'>('login');
   const [activeTab, setActiveTab] = useState<'home' | 'files' | 'chat' | 'homework' | 'profile'>('home');
   const [securityPassed, setSecurityPassed] = useState(false);
-  const [showLanding, setShowLanding] = useState(true);
   
   // Form states
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
@@ -168,7 +166,6 @@ const App: React.FC = () => {
     const stored = localStorage.getItem('sjt_bypass');
     if (stored && stored === import.meta.env.VITE_BYPASS_CODE) {
       setSecurityPassed(true);
-      setShowLanding(false);
     }
   }, []);
 
@@ -609,27 +606,18 @@ const App: React.FC = () => {
       file.tags.some(t => t.toLowerCase().includes(tagFilter.toLowerCase()))
     );
 
-  if (showLanding && !securityPassed) {
+  if (!securityPassed) {
     return (
       <LandingPage
         onBypass={(code) => {
           if (code === import.meta.env.VITE_BYPASS_CODE) {
             localStorage.setItem('sjt_bypass', code);
             setSecurityPassed(true);
-            setShowLanding(false);
           } else {
             alert('Incorrect bypass code');
           }
         }}
-        onContinue={() => setShowLanding(false)}
-      />
-    );
-  }
-
-  if (!securityPassed) {
-    return (
-      <CloudflareGate
-        onSuccess={(token) => {
+        onVerify={(token) => {
           fetch('/api/verify-turnstile', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
