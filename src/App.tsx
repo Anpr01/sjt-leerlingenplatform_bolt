@@ -166,6 +166,8 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const stored = localStorage.getItem('sjt_bypass');
+    if (stored === 'true') {
+      setSecurityPassed(true);
     if (stored && stored === import.meta.env.VITE_BYPASS_CODE) {
       setSecurityPassed(true);
       setShowLanding(false);
@@ -628,8 +630,12 @@ const App: React.FC = () => {
 
   if (!securityPassed) {
     return (
-      <CloudflareGate
-        onSuccess={(token) => {
+      <LandingPage
+        onBypass={() => {
+          localStorage.setItem('sjt_bypass', 'true');
+          setSecurityPassed(true);
+        }}
+        onVerify={(token) => {
           fetch('/api/verify-turnstile', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
