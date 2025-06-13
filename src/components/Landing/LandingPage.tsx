@@ -7,6 +7,14 @@ interface LandingPageProps {
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onBypass, onVerify }) => {
+=======
+
+interface LandingPageProps {
+  onBypass: (code: string) => void;
+  onContinue: () => void;
+}
+
+export const LandingPage: React.FC<LandingPageProps> = ({ onBypass, onContinue }) => {
   const [code, setCode] = useState('');
 
   return (
@@ -14,6 +22,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onBypass, onVerify }) 
       <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md space-y-4">
         <h1 className="text-2xl font-bold text-center">Welkom</h1>
         <p className="text-center text-gray-600">Voer de bypasscode in of doorloop de verificatie.</p>
+        <p className="text-center text-gray-600">Voer de bypasscode in of ga verder naar de verificatie.</p>
         <input
           type="password"
           className="border rounded w-full p-2"
@@ -32,6 +41,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onBypass, onVerify }) 
           onSuccess={onVerify}
           onError={() => alert('Turnstile verification failed')}
         />
+        <div className="flex justify-between">
+          <button
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+            onClick={() => onBypass(code)}
+          >
+            Bypass
+          </button>
+          <button
+            className="bg-gray-200 px-4 py-2 rounded"
+            onClick={onContinue}
+          >
+            Continue
+          </button>
+        </div>
       </div>
     </div>
   );
