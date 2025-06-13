@@ -12,3 +12,8 @@ This project uses Vite with React and TypeScript.
 
 The Vite dev server proxies `/api` requests to the Express backend so the
 Turnstile verification works locally.
+
+## Bypass code
+
+The `LandingPage` lets you skip the Turnstile check by entering a bypass code. Set `VITE_BYPASS_CODE` in your `.env` file to customize this code. If the code is correct it is saved to `localStorage` so you only verify once per browser.
+
