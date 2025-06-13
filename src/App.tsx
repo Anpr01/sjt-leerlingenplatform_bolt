@@ -168,7 +168,6 @@ const App: React.FC = () => {
     const stored = localStorage.getItem('sjt_bypass');
     if (stored && stored === import.meta.env.VITE_BYPASS_CODE) {
       setSecurityPassed(true);
-      setShowLanding(false);
     }
   }, []);
 
@@ -628,8 +627,16 @@ const App: React.FC = () => {
 
   if (!securityPassed) {
     return (
-      <CloudflareGate
-        onSuccess={(token) => {
+      <LandingPage
+        onBypass={(code) => {
+          if (code === import.meta.env.VITE_BYPASS_CODE) {
+            localStorage.setItem('sjt_bypass', code);
+            setSecurityPassed(true);
+          } else {
+            alert('Incorrect bypass code');
+          }
+        }}
+        onVerify={(token) => {
           fetch('/api/verify-turnstile', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
